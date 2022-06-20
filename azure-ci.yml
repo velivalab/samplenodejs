@@ -1,0 +1,78 @@
+pool:
+  name: Azure Pipelines
+steps:
+- task: NodeTool@0
+  displayName: 'Use Node 14.x'
+  inputs:
+    versionSpec: 14.x
+    checkLatest: true
+
+- script: |
+   sudo apt-get update
+   sudo wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+   sudo apt install -y ./google-chrome*.deb;
+   export CHROME_BIN=/usr/bin/google-chrome
+  displayName: 'Install google-chrome'
+
+- task: Npm@1
+  displayName: 'npm install'
+  inputs:
+    workingDir: 'samples-app'
+    verbose: false
+
+- task: Npm@1
+  displayName: 'npm build'
+  inputs:
+    command: custom
+    workingDir: 'samples-app'
+    verbose: false
+    customCommand: 'run build'
+
+- task: Npm@1
+  displayName: 'npm test'
+  inputs:
+    command: custom
+    workingDir: 'samples-app'
+    verbose: false
+    customCommand: 'run test --code-coverage --no-progress --browsers=ChromeHeadlessCI'
+
+- task: ArchiveFiles@2
+  displayName: 'Archive files'
+  inputs:
+    rootFolderOrFile: 'samples-app/dist/samples-app'
+    includeRootFolder: false
+    verbose: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifacts'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Junit Test Results'
+  inputs:
+    testResultsFiles: '**/testResults.xml'
+
+- task: ServiceNow-DevOps-Agent-Artifact-Registration@1
+  inputs:
+    connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+    artifactsPayload: |
+      {
+         "artifacts": [
+            {
+               "name": "_samples-ci",
+               "version": "1.$(Build.BuildId)",
+               "semanticVersion": "1.$(Build.BuildId).0",
+               "repositoryName": "samples-ci"
+            }
+         ]
+      }
+
+- task: ServiceNow-DevOps-Config-Agent-Upload-Config@1
+  inputs:
+    connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+    applicationName: 'samples'
+    uploadTarget: 'component'
+    configFilePath: 'componentTomcat.json'
+    namePath: 'tomcat'
+    dataFormat: 'json'
+    autoValidate: true
+    autoCommit: true

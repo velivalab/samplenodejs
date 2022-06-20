@@ -1,0 +1,117 @@
+pool:
+  name: Azure Pipelines
+  vmImage: ubuntu-latest
+
+stages:
+- stage: 'Build'
+  jobs:
+  - job: 'BuildApp'
+    steps:
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: 'samples-app/dist/samples-app'
+        includeRootFolder: false
+        verbose: true
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish artifacts'
+
+- stage: 'Registering_the_artifact'
+  jobs:
+  - job: 'RegisterArtifact'
+    steps:
+    - task: ServiceNow-DevOps-Agent-Artifact-Registration@1
+      inputs:
+        connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+        artifactsPayload: |
+          {
+            "artifacts": [
+                {
+                  "name": "_samples-ci",
+                  "version": "1.$(Build.BuildId)",
+                  "semanticVersion": "1.$(Build.BuildId).0",
+                  "repositoryName": "samples-ci"
+                }
+            ]
+          }
+
+- stage: 'Running_SonarQube'
+  jobs:
+  - job: 'ScanningCode'
+    steps:
+    # - task: SonarQubePrepare@5
+    #   inputs:
+    #     SonarQube: 'sonarqube-aks'
+    #     scannerMode: 'CLI'
+    #     configMode: 'manual'
+    #     cliProjectKey: 'cyr-riv_samples'
+    #     cliProjectName: 'samples'
+    #     cliSources: '.'
+    # - task: SonarQubeAnalyze@5
+    # - task: SonarQubePublish@5
+    #   inputs:
+    #     pollingTimeoutSec: '300'
+    - task: ServiceNow-DevOps-Build-Sonar-Registration@1
+      inputs:
+        connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+        sonarProjectKey: 'samples_samples'
+        sonarInstanceUrl: 'http://20.126.227.54:9000/'
+
+
+- stage: 'Running_Test'
+  jobs:
+  - job: 'RunningTest'
+    steps:
+    - task: PublishTestResults@2
+      displayName: 'Publish Junit Test Results'
+      inputs:
+        testResultsFiles: '**/testResults.xml'
+
+- stage: 'Registering_the_package'
+  jobs:
+  - job: 'RegisterPackage'
+    steps:
+    - task: ServiceNow-DevOps-Agent-Package-Registration@1
+      inputs:
+        connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+        packageName: 'sample-package'
+        artifactsPayload: |
+          {
+              "artifacts": [
+              {
+                  "name": "_samples-ci",
+                  "repositoryName": "samples-ci",
+                  "version": "1.$(build.buildId)",
+                  "currentBuildInfo": "true"
+              }]
+          }
+
+- stage: 'Approve_the_Change'
+  jobs:
+  - job: 'ApproveChange'
+    pool: server
+    steps:
+    - task: ServiceNow-DevOps-Server-Change-Acceleration@1
+      inputs:
+        connectedServiceName: 'cyridemo02-samples-ServiceNow DevOps Service Connection'
+        UpstreamJob: 'RegisterPackage'
+        changeRequestDetails: |
+          {
+              "setCloseCode" : false,
+              "attributes": {
+                "requested_by": {
+                  "name": "Cyrille Rivière"
+                },
+                "short_description": "Application deployment for samples-prd",
+                "cmdb_ci": {
+                  "name": "samples-prd-backend-2"
+                },
+                "business_service": {
+                  "name": "samples-prd"
+                }
+              }
+            }
+
+- stage: 'deploy_to_PROD'
+  jobs:
+  - job: 'deployProd'
