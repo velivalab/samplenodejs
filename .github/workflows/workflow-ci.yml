@@ -120,7 +120,7 @@ jobs:
           devops-integration-user-password: ${{ secrets.SN_DEVOPS_PASSWORD }}
           instance-url: ${{ secrets.SN_INSTANCE_URL }}
           tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-          job-name: 'Build'
+          job-name: 'Run SonarQube'
           context-github: ${{ toJSON(github) }}
           sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -132,8 +132,8 @@ jobs:
     steps:
     - name: Register Package to ServiceNow
       shell: bash
-      run : |
-        echo "Register Package to ServiceNow"
+      run : echo "Register Package to ServiceNow"
+      
     - name: ServiceNow Register Package
       uses: ServiceNow/servicenow-devops-register-package@v1.34.2
       with:
