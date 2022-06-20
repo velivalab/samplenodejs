@@ -31,19 +31,22 @@ jobs:
     - name: npm install.
       run: npm install
       working-directory: ./samples-app
+     
+    - name: sonarqube-scanner install.
+      run: npm install -g sonarqube-scanner
 
     - name: npm build.
-      run: rm -Rf reports && npm run build --if-present
+      run: npm run clean && npm run build --if-present
       working-directory: ./samples-app
     
     - name: npm test.
       run: npm run test --if-present
       working-directory: ./samples-app
       
-    - name: Add skipped property
-      run: xml2junit
+    - name: convert to junit xml
+      run: npm run junitxml
       working-directory: ./samples-app
-    
+      
     # - name: Publish JUnit Test Results
     #   uses: EnricoMi/publish-unit-test-result-action@v1
     #   if: always()
