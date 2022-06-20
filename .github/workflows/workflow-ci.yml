@@ -72,6 +72,7 @@ jobs:
         name: samples-app
         path: ./samples-app/dist/samples-app
   
+  
   runSonarQube:
     name: 'Run SonarQube' 
     runs-on: ubuntu-latest
@@ -104,7 +105,8 @@ jobs:
           context-github: ${{ toJSON(github) }}
           sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
-          
+    
+    
   registerArtifact:
     name: 'Register Artifact'
     runs-on: ubuntu-latest
@@ -124,7 +126,8 @@ jobs:
         context-github: ${{ toJSON(github) }}
         job-name:  'Register Artifact'
         artifacts: '[{"name": "samples-app.zip","version": "1.${{ github.run_number }}","semanticVersion": "1.${{ github.run_number }}.0","repositoryName": "${{ github.repository }}"}]'
-              
+ 
+ 
   registerPackage:
     name: 'Register Package'
     runs-on: ubuntu-latest
@@ -145,6 +148,7 @@ jobs:
         job-name: 'Register Package'
         artifacts: '[{"name": "samples-app.zip","version": "1.${{ github.run_number }}","semanticVersion": "1.${{ github.run_number }}.0","repositoryName": "${{ github.repository }}"}]'
         package-name: 'samples-package'
+
 
   approveChangeRequest:
     name: 'Approve Change Request'
