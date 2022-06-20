@@ -13,6 +13,11 @@ env:
   AZURE_WEBAPP_DEV_NAME: samples-app-dev    # set this to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
   NODE_VERSION: '14.x'                # set this to the node version to use
+  GITHUB_TOKEN: ${{ secrets.GHP_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+  SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
 
 jobs:
   build:
@@ -31,9 +36,6 @@ jobs:
     - name: npm install.
       run: npm install
       working-directory: ./samples-app
-     
-    - name: sonarqube-scanner install.
-      run: npm install -g sonarqube-scanner
 
     - name: npm build.
       run: npm run clean && npm run build --if-present
@@ -102,6 +104,7 @@ jobs:
         
     - name: sonarqube-scanner install.
       run: npm install -g sonarqube-scanner
+      working-directory: ./samples-app
         
     - name: SonarCloud Scan
       run: sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORG_KEY -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=workflow
