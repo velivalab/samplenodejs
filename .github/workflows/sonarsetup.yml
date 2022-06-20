@@ -1,0 +1,69 @@
+name: sonarsetup
+
+on:
+  push:
+    branches:
+      - workflow
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_DEV_NAME: samples-app-dev    # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: '14.x'                # set this to the node version to use
+  GITHUB_TOKEN: ${{ secrets.GHP_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+  SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: samples-app/package-lock.json
+
+    - name: npm install.
+      run: npm install
+      working-directory: ./samples-app
+     
+    - name: sonarqube-scanner install.
+      run: npm install -g sonarqube-scanner
+
+    - name: npm build.
+      run: npm run clean && npm run build --if-present
+      working-directory: ./samples-app
+    
+    - name: npm test.
+      run: npm run test --if-present
+      working-directory: ./samples-app
+      
+    - name: convert to junit xml
+      run: npm run junitxml
+      working-directory: ./samples-app
+    
+    - name: SonarCloud Scan
+      run: sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORG_KEY -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=workflow
+      
+    - name: ServiceNow DevOps Sonar Scan Results
+      uses: ServiceNow/servicenow-devops-sonar@v1.34.2
+      with:
+          devops-integration-user-name: ${{ secrets.SN_DEVOPS_USER }}
+          devops-integration-user-password: ${{ secrets.SN_DEVOPS_PASSWORD }}
+          instance-url: ${{ secrets.SN_INSTANCE_URL }}
+          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+          job-name: 'Build'
+          context-github: ${{ toJSON(github) }}
+          sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
+          sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
+          
