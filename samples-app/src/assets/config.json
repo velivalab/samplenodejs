@@ -1,0 +1,21 @@
+{
+	"1.0.0": {
+		"tomcat": {
+			"TOMCAT_LDAP_LOGIN": "uid=ldapServiceAccount,ou=Users,o=sweagle,dc=jumpcloud,dc=com",
+			"TOMCAT_LDAP_PASSWORD": "RzWW1Ysn8hLx",
+			"TOMCAT_LDAP_URL": "ldaps://ldap.jumpcloud.com:636"
+		},
+		"dev-stack": {
+			"dev-stack-service-module.smtp-host": "smtp.servicenow.fr",
+			"dev-stack-service-module.environment-type": "DEV",
+			"dev-stack-service-module.environment-site": "35",
+			"dev-stack-service-module.portalFrontendUrl": "http://test.sweagle.com/"
+		},
+		"databases": {
+			"resource.security.driverProperties.url": "jdbc:postgresql://10.160.50.77/security",
+			"resource.lunar_central.driverProperties.url": "jdbc:postgresql://10.160.50.77/lunar_central",
+			"resource.swingmgr.driverProperties.url": "jdbc:postgresql://10.160.50.77/security",
+			"resource.dev_stack.driverProperties.url": "jdbc:postgresql://10.160.50.77/samples"
+		}
+	}
+}
