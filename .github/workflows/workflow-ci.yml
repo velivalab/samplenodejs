@@ -1,18 +1,12 @@
 name: workflow-ci
 
 on:
-  push:
-    branches:
-      - workflow
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 env:
   AZURE_WEBAPP_DEV_NAME: samples-app-dev    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '14.x'                # set this to the node version to use
+  AZURE_WEBAPP_PACKAGE_PATH: '.'            # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: '14.x'                      # set this to the node version to use
   GITHUB_TOKEN: ${{ secrets.GHP_TOKEN }}
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -48,12 +42,6 @@ jobs:
     - name: convert to junit xml
       run: npm run junitxml
       working-directory: ./samples-app
-      
-    # - name: Publish JUnit Test Results
-    #   uses: EnricoMi/publish-unit-test-result-action@v1
-    #   if: always()
-    #   with:
-    #     files: "**/testResults.xml"
     
     - name: ServiceNow DevOps Unit Test Results
       uses: ServiceNow/servicenow-devops-test-report@v1.34.2
@@ -65,13 +53,6 @@ jobs:
         context-github: ${{ toJSON(github) }}
         job-name: 'Build'
         xml-report-filename: './samples-app/reports/'
-
-    - name: Upload artifact for deployment job
-      uses: actions/upload-artifact@v3
-      with:
-        name: samples-app
-        path: ./samples-app/dist/samples-app
-  
   
   runSonarQube:
     name: 'Run SonarQube' 
