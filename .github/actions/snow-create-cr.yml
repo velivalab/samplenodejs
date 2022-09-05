@@ -1,0 +1,63 @@
+name: snow-create-cr
+description: Get artifacts url, create work_notes, create change request in SNOW
+inputs:
+  github-token: 
+    description: github access token
+    required: true
+  repo-def-file:
+    description: json file defines repos.json
+  tool_id:
+    required: true
+  devop_user_name:
+    required: true
+  devop_pwd:
+    required: true
+  instance_url:
+    required: true
+  status:
+    required: true
+runs:
+  using: "composite"
+jobs:
+  name: 'Change Acceleration'
+  runs-on: ubuntu-latest
+  steps:
+    - name: Set current date as env variable
+      shell: bash
+      run: echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+    - name: Set future date as env variable
+      shell: bash
+      run: echo "FUTURE=$(date +'%Y-%m-%dT%H:%M:%S' -d '1 day')" >> $GITHUB_ENV
+    - name: checkartifactsid # check artifacts id
+      id: check-artifact
+      shell: bash
+      run: |
+        product=$(cat ${{inputs.repo-def-file}} | jq -c -r '.product')
+        echo $product
+        URL="https://api.github.com/repos/${{github.repository}}/actions/runs?branch=main"
+        RESP=`curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token  ${{inputs.github-token}}" $URL`
+        run=$(jq '[.workflow_runs[] | select(.name | contains("Main")) | {id:.id,run_number:.run_number,run_attempt:.run_attempt,url:.html_url,suiteid:.check_suite_id}]| sort_by(.id)|last' <<< $RESP)
+        run_url=$(jq -r '.url' <<< "$run")
+        run_id=$(jq -r '.id' <<< "$run")
+        suiteid=$(jq -r '.suiteid' <<< "$run")
+        URL2="https://api.github.com/repos/${{github.repository}}/actions/runs/${run_id}/artifacts"
+        RESP2=`curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{inputs.github-token}}" $URL2`
+        artifact=$(jq -c -r '[.artifacts[]]|last' <<< $RESP2)
+        artifact_id=$(jq -r '.id' <<< "$artifact")
+        evidence="https://github.com/${{github.repository}}/suites/${suiteid}/artifacts/${artifact_id}"
+        work_notes="For product ${product}:${{inputs.status}}\n[code]<a href=\\\"${run_url}\\\" target=\\\"_blank\\\">Pipeline Run URL</a>[/code]\n[code]<a href=\\\"${evidence}\\\" target=\\\"_blank\\\">Pipeline Execution Evidence</a>[/code]"
+        #echo "::set-output name=WORK_NOTES::$work_notes"
+        echo "WORK_NOTES=$work_notes" >> $GITHUB_ENV
+    - name: ServiceNow DevOps Change
+      uses: ServiceNow/servicenow-devops-change@v1.34.2
+      with:
+        devops-integration-user-name: ${{inputs.devop_user_name}}
+        devops-integration-user-password: ${{inputs.devop_pwd}}
+        instance-url: ${{inputs.instance_url}}
+        tool-id: ${{inputs.tool_id}}
+        context-github: ${{ toJSON(github) }}
+        job-name: 'Change Acceleration'
+        change-request: '{"setCloseCode":"true","attributes":{"start_date":"${{ env.NOW }}","end_date":"${{ env.FUTURE }}","work_notes":"${{ env.WORK_NOTES}}","correlation_id":"gh_${{ github.repository }}-${{ github.workflow }}.${{ github.run_number }}.${{ github.run_attempt }}","short_description":"Automation POC CR","description":"CR for Automation POC.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing CR creation when all tests and security scans are passed."}}'
+        interval: '100'
+        timeout: '3600'
+        
