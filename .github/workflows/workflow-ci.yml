@@ -1,12 +1,6 @@
 name: workflow-ci
 
 on:
-  push:
-    branches:
-      - workflow
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 env:
@@ -48,12 +42,6 @@ jobs:
     - name: convert to junit xml
       run: npm run junitxml
       working-directory: ./samples-app
-      
-    # - name: Publish JUnit Test Results
-    #   uses: EnricoMi/publish-unit-test-result-action@v1
-    #   if: always()
-    #   with:
-    #     files: "**/testResults.xml"
     
     - name: ServiceNow DevOps Unit Test Results
       uses: ServiceNow/servicenow-devops-test-report@v1.34.2
@@ -171,4 +159,14 @@ jobs:
         change-request: '{"setCloseCode":"false","attributes":{"short_description":"Application deployment for samples-dev","description":"Automated Software Deployment.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
         interval: '100'
         timeout: '3600'
-
+   
+   
+  deploy:
+    name: 'Deploy'
+    needs: approveChangeRequest
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy Target
+      shell: bash
+      run : echo "Deployment Started...."    
+      
