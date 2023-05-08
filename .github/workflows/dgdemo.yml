@@ -1,0 +1,13 @@
+name: dgdemo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - name: Deployment Script
+        run: echo Deployment Started
