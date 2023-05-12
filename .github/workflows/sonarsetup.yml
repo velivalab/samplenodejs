@@ -50,20 +50,9 @@ jobs:
       
     - name: convert to junit xml
       run: npm run junitxml
-      working-directory: ./samples-app
-    
-    - name: SonarCloud Scan
-      run: sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORG_KEY -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=master
-      
+      working-directory: ./samples-app 
+
     - name: ServiceNow DevOps Sonar Scan Results
       uses: ServiceNow/servicenow-devops-sonar@v1.34.2
       with:
-          devops-integration-user-name: ${{ secrets.SN_DEVOPS_USER }}
-          devops-integration-user-password: ${{ secrets.SN_DEVOPS_PASSWORD }}
-          instance-url: ${{ secrets.SN_INSTANCE_URL }}
-          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-          job-name: 'Build'
-          context-github: ${{ toJSON(github) }}
-          sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
-          sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
-          
+          time: '600s'
