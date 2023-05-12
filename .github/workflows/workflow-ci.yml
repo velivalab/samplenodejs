@@ -69,7 +69,7 @@ jobs:
       working-directory: ./samples-app
         
     - name: SonarCloud Scan
-      run: sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORG_KEY -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=workflow
+      run: sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORG_KEY -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=master
       
     - name: Store Scan Tests Results
       shell: bash
@@ -152,4 +152,14 @@ jobs:
         change-request: '{"setCloseCode":"false","attributes":{"short_description":"Application deployment for samples-dev","description":"Automated Software Deployment.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
         interval: '100'
         timeout: '3600'
-
+   
+   
+  deploy:
+    name: 'Deploy'
+    needs: approveChangeRequest
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy Target
+      shell: bash
+      run : echo "Deployment Started...."    
+      
